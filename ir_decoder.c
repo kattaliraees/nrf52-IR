@@ -18,6 +18,9 @@
 #include "nrfx_ppi.h"
 #include "nrf_log_ctrl.h"
 
+TSOP38238
+#define IR_IN 17
+
 static ir_data_t ir_signal_burst[256] = {0, 0};
 
 static uint32_t ir_bit_index = 0;
@@ -33,7 +36,7 @@ void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
 
 bool started = false;
 
-void start_decoding(ir_decode_complete_task t) {
+void start_capturing(ir_decode_complete_task t) {
   completion_task = t;
   enable_ir_in_gpiote_interrupt();
 }
