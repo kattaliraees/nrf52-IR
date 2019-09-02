@@ -18,6 +18,8 @@
 #include "nrf_log.h"
 #include "boards.h"
 
+//IR LED Input
+#define IR_LED 18
 
 #define PWM_TIMER_REDUCE_CPU_CYCLES 50 //50ms
 const nrfx_timer_t IR_CARRIER_TIMER = NRFX_TIMER_INSTANCE(1);

@@ -15,5 +15,5 @@ typedef struct  {
 
 typedef void  ir_decode_complete_task(int, ir_data_t *ir_data_ptr);
 
-void start_decoding(ir_decode_complete_task t);
+void start_capturing(ir_decode_complete_task t);
 
