@@ -16,9 +16,6 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
-#include "i2c_drv.h"
-#include "AT24C32.h"
-#include "DS3231.h"
 #include "ir_transmitter.h"
 #include "nrfx_clock.h"
 
@@ -42,20 +39,13 @@ int main(void)
 {
     ret_code_t err_code;
     
-
     err_code = nrfx_clock_init(&clock_event_handler);
     APP_ERROR_CHECK(err_code);
 
-    twi_init();
-    scan_i2c_devices();
-
-    //NRF_LOG_INFO("Device Started");
     nrfx_clock_hfclk_start();
-    //NRF_LOG_INFO("Waiting for HFCLK to Start..");
+
     while(!nrfx_clock_hfclk_is_running()){}
     
-
-    enable_status_led();
     log_init();
 
     NRF_LOG_INFO("Started");
@@ -63,26 +53,16 @@ int main(void)
 
     //Test DATA
     //ir_data_t a[] = {{1,9063}, {0,4472}, {1,541}, {0,551}, {1,538}, {0,552}, {1,537}, {0,1670}, {1,541}, {0,550}, {1,539}, {0,550}, {1,539}, {0,549}, {1,541}, {0,550}, {1,537}, {0,1670}, {1,541}, {0,550}};
-
-    start_decoding(&ir_decode_task_completed);
     //send_ir_burst(a, 10);
+    
+    start_decoding(&ir_decode_task_completed);
+
     
 
     while (1) {
         //NRF_LOG_INFO("l");
         NRF_LOG_PROCESS();
     }
-}
-
-
-
-void enable_status_led(void) {
-    
-    nrf_gpio_cfg_output(STATUS_LED);
-    //nrf_gpio_cfg_output(IR_LED);
-    nrf_gpio_pin_set(STATUS_LED);
-    nrf_delay_ms(100);
-    nrf_gpio_pin_clear(STATUS_LED);
 }
 
 void log_init(void) {
