@@ -32,7 +32,7 @@ SOFTWARE.
 #include "nrfx_ppi.h"
 #include "nrf_log_ctrl.h"
 
-TSOP38238
+//TSOP38238
 #define IR_IN 17
 
 static ir_data_t ir_signal_burst[256] = {0, 0};
@@ -44,7 +44,6 @@ ir_decode_complete_task *completion_task;
 const nrfx_timer_t IR_CAPTURE_TIMER = NRFX_TIMER_INSTANCE(1);
 
 void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context);
-
 void enable_ir_in_gpiote_interrupt();
 void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
@@ -62,7 +61,7 @@ void enable_ir_in_gpiote_interrupt() {
     uint32_t timer_start_task_addr;
     uint32_t gpiote_in_event_addr;
 
-    //GPIOTE Toggle interrupt
+    //GPIOTE input TOGGLE interrupt
     if(!nrfx_gpiote_is_init()) {
       err_code = nrfx_gpiote_init();
       APP_ERROR_CHECK(err_code);
@@ -128,8 +127,7 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
 
 void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    //nrfx_timer_pause(&IR_CAPTURE_TIMER); -PPI will stop the timer
-
+    //nrfx_timer_pause(&IR_CAPTURE_TIMER); --PPI will stop the timer
     if(started == false) {
         started = true;
     }

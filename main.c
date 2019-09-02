@@ -33,18 +33,10 @@ SOFTWARE.
 #include "nrfx_clock.h"
 
 
-void enable_status_led(void);
 void log_init(void);
 
-void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr) {
-
-    nrf_delay_ms(1000);
-
-    //Test
-    send_ir_burst(ir_data_ptr, number_of_bits);
-}
-
 void clock_event_handler(nrfx_clock_evt_type_t event) {}
+void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr);
 
 int main(void)
 {
@@ -55,8 +47,12 @@ int main(void)
 
     while(!nrfx_clock_hfclk_is_running()){}
     
-    log_init();
+    //Log Init
+    APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+    NRF_LOG_FLUSH();
 
+    
     NRF_LOG_INFO("Started");
     NRF_LOG_PROCESS();
 
@@ -72,11 +68,11 @@ int main(void)
     }
 }
 
-void log_init(void) {
+void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr) {
     
-    APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-    NRF_LOG_DEFAULT_BACKENDS_INIT();
-    NRF_LOG_FLUSH();
-    NRF_LOG_INFO("SmartIR Starting...");
+    nrf_delay_ms(1000);
+    
+    //Test
+    send_ir_burst(ir_data_ptr, number_of_bits);
 }
 
