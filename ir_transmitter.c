@@ -74,6 +74,8 @@ bool send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complet
 
     ir_bit_index = 0;
     is_sending = true;
+
+    return true;
 }
 
 //Timer 1 will toggle IR LED via PPI

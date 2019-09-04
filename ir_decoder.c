@@ -49,9 +49,16 @@ void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
 
 bool is_decoding = false;
 
-void start_capturing(ir_decode_complete_task t) {
-  completion_task = t;
-  enable_ir_in_gpiote_interrupt();
+bool start_capturing(ir_decode_complete_task t) {
+
+    if(is_decoding) {
+        t(0, NULL);
+        return false;
+    }
+    completion_task = t;
+    enable_ir_in_gpiote_interrupt();
+
+    return true;
 }
 
 bool enable_ir_in_gpiote_interrupt() {
@@ -62,8 +69,8 @@ bool enable_ir_in_gpiote_interrupt() {
 
     //GPIOTE Toggle interrupt
     if(!nrfx_gpiote_is_init()) {
-      err_code = nrfx_gpiote_init();
-      APP_ERROR_CHECK(err_code);
+        err_code = nrfx_gpiote_init();
+        APP_ERROR_CHECK(err_code);
     }
     
     nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
@@ -110,8 +117,8 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
     {
         case NRF_TIMER_EVENT_COMPARE0:
             if(!is_decoding) {
-              nrfx_timer_pause(&IR_CAPTURE_TIMER);
-              break;
+                nrfx_timer_pause(&IR_CAPTURE_TIMER);
+                break;
             }
             nrfx_timer_disable(&IR_CAPTURE_TIMER);
             nrfx_timer_uninit(&IR_CAPTURE_TIMER);
