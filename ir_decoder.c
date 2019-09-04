@@ -57,11 +57,10 @@ void start_capturing(ir_decode_complete_task t) {
 void enable_ir_in_gpiote_interrupt() {
 
     ret_code_t err_code;
-    nrf_ppi_channel_t ppi_channel;
     uint32_t timer_start_task_addr;
     uint32_t gpiote_in_event_addr;
 
-    //GPIOTE input TOGGLE interrupt
+    //GPIOTE Toggle interrupt
     if(!nrfx_gpiote_is_init()) {
       err_code = nrfx_gpiote_init();
       APP_ERROR_CHECK(err_code);
@@ -83,7 +82,7 @@ void enable_ir_in_gpiote_interrupt() {
     
     uint32_t duty_cycle_time_ticks;
 
-    duty_cycle_time_ticks = nrfx_timer_ms_to_ticks(&IR_CAPTURE_TIMER, 1000);
+    duty_cycle_time_ticks = nrfx_timer_ms_to_ticks(&IR_CAPTURE_TIMER, 100);
     nrfx_timer_extended_compare(&IR_CAPTURE_TIMER, NRF_TIMER_CC_CHANNEL0, duty_cycle_time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
     
     //PPI from GPIOTE to Timer Pause
@@ -116,6 +115,10 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
             }
             nrfx_timer_disable(&IR_CAPTURE_TIMER);
             nrfx_timer_uninit(&IR_CAPTURE_TIMER);
+            nrfx_ppi_channel_disable(ppi_channel);
+            nrfx_ppi_channel_free(ppi_channel);
+            nrfx_gpiote_in_event_disable(IR_IN);
+            nrfx_gpiote_in_uninit(IR_IN);
             completion_task(ir_bit_index, ir_signal_burst);
             started = false;
             break;
@@ -127,22 +130,21 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
 
 void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-    //nrfx_timer_pause(&IR_CAPTURE_TIMER); --PPI will stop the timer
+    //nrfx_timer_pause(&IR_CAPTURE_TIMER); -PPI will stop the timer
+
+    NRF_TIMER1->TASKS_CAPTURE[1] = 1;
+    uint32_t pulse_width_us = NRF_TIMER1->CC[1];
+    nrfx_timer_clear(&IR_CAPTURE_TIMER);
+    nrfx_timer_resume(&IR_CAPTURE_TIMER);
+
     if(started == false) {
         started = true;
     }
     else
     {
-        NRF_TIMER1->TASKS_CAPTURE[1] = 1;
-        uint32_t pulse_width_us = NRF_TIMER1->CC[1];
-        
         ir_signal_burst[ir_bit_index].duty_cycle_state = nrf_gpio_pin_read(IR_IN);
-        ir_signal_burst[ir_bit_index].duty_cycle_us = pulse_width_us;
+        ir_signal_burst[ir_bit_index].duty_cycle_us = pulse_width_us + 5;
         ir_bit_index++;
         //NRF_LOG_INFO("%d. %d - %d", ir_bit_index, ir_signal_burst[ir_bit_index].duty_cycle_state, ir_signal_burst[ir_bit_index].duty_cycle_us);
     }
-
-    
-    nrfx_timer_clear(&IR_CAPTURE_TIMER);
-    nrfx_timer_resume(&IR_CAPTURE_TIMER);
 }

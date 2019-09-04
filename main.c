@@ -37,6 +37,7 @@ void log_init(void);
 
 void clock_event_handler(nrfx_clock_evt_type_t event) {}
 void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr);
+void ir_transmit_task_completed (void);
 
 int main(void)
 {
@@ -73,6 +74,12 @@ void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr) {
     nrf_delay_ms(1000);
     
     //Test
-    send_ir_burst(ir_data_ptr, number_of_bits);
+    send_ir_burst(ir_data_ptr, number_of_bits, &ir_transmit_task_completed);
 }
 
+void ir_transmit_task_completed (void) {
+    
+    nrf_delay_ms(2000);
+    //Re-send captureed burst after 5 seconds
+    start_decoding(&ir_decode_task_completed);
+}

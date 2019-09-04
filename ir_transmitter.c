@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "ir_decoder.h"
+#include "ir_transmitter.h"
 #include "nrfx_timer.h"
 #include "nrfx_gpiote.h"
 #include "nrf_delay.h"
@@ -48,15 +48,15 @@ static uint32_t  ir_bit_index = 0;
 static uint32_t  ir_pulse_count = 0;
 ir_data_t *ir_signal_burst_to_send;
 
-void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count) {
+ir_transmit_complete_task *c_task;
+
+void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complete_task t) {
 
     ret_code_t err_code;
-
+      
+    c_task = t;
     ir_pulse_count = pulse_count;
     ir_signal_burst_to_send = ir_data;
-
-    err_code = nrf_drv_ppi_init();
-    APP_ERROR_CHECK(err_code);
     
     if(!nrfx_gpiote_is_init()) {
       err_code = nrfx_gpiote_init();
@@ -72,11 +72,10 @@ void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count) {
 //Timer 1 will toggle IR LED via PPI
 void ir_carrier_init(void) {
     
-    uint32_t time_us = 13;
+    uint32_t time_us = 14;
     uint32_t time_ticks;
     uint32_t compare_evt_addr;
     uint32_t gpiote_task_addr;
-    nrf_ppi_channel_t ppi_channel;
     ret_code_t err_code;
 
     nrfx_timer_config_t timer_cfg = NRFX_TIMER_DEFAULT_CONFIG;
@@ -91,16 +90,16 @@ void ir_carrier_init(void) {
     time_ticks = nrfx_timer_us_to_ticks(&IR_CARRIER_TIMER, time_us);
     nrfx_timer_extended_compare(&IR_CARRIER_TIMER, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, false);
     
-    err_code = nrfx_ppi_channel_alloc(&ppi_channel);
+    err_code = nrfx_ppi_channel_alloc(&ppi_channel_2);
     APP_ERROR_CHECK(err_code);
     
     compare_evt_addr = nrfx_timer_event_address_get(&IR_CARRIER_TIMER, NRF_TIMER_EVENT_COMPARE0);
     gpiote_task_addr = nrfx_gpiote_out_task_addr_get(IR_LED);
     
-    err_code = nrfx_ppi_channel_assign(ppi_channel, compare_evt_addr, gpiote_task_addr);
+    err_code = nrfx_ppi_channel_assign(ppi_channel_2, compare_evt_addr, gpiote_task_addr);
     APP_ERROR_CHECK(err_code);
     
-    err_code = nrfx_ppi_channel_enable(ppi_channel);
+    err_code = nrfx_ppi_channel_enable(ppi_channel_2);
     APP_ERROR_CHECK(err_code);
     
     nrfx_gpiote_out_task_enable(IR_LED);
@@ -110,12 +109,11 @@ void ir_carrier_init(void) {
 
 }
 
-//TIMER 2 will ON/OFF IR Carrier. PPI is used to turn OFF carrier immediately
 void ir_pwm_timer_init(void) {
     
     uint32_t timer_stop_task_addr;
     uint32_t timer_event_addr;
-    nrf_ppi_channel_t ppi_channel;
+    
     ret_code_t err_code;
 
     nrfx_timer_config_t timer_cfg = NRFX_TIMER_DEFAULT_CONFIG;
@@ -124,55 +122,85 @@ void ir_pwm_timer_init(void) {
     err_code = nrfx_timer_init(&IR_PWM_TIMER, &timer_cfg, pwm_timer_event_handler);
     APP_ERROR_CHECK(err_code);
 
-    nrfx_timer_extended_compare(&IR_PWM_TIMER, NRF_TIMER_CC_CHANNEL0, 100000, NRF_TIMER_SHORT_COMPARE0_STOP_MASK, true); //will start sending after 100ms
+    nrfx_timer_extended_compare(&IR_PWM_TIMER, NRF_TIMER_CC_CHANNEL0, 20000, NRF_TIMER_SHORT_COMPARE0_STOP_MASK, true);
 
     //PPI from PWM TIMER to IR_CARRIER TIMER Pause
     timer_stop_task_addr = nrfx_timer_task_address_get(&IR_CARRIER_TIMER, NRF_TIMER_TASK_STOP);
     timer_event_addr = nrfx_timer_event_address_get(&IR_PWM_TIMER, NRF_TIMER_EVENT_COMPARE0);
     
-    err_code = nrfx_ppi_channel_alloc(&ppi_channel);
+    err_code = nrfx_ppi_channel_alloc(&ppi_channel_1);
     APP_ERROR_CHECK(err_code);
 
-    err_code = nrfx_ppi_channel_assign(ppi_channel, timer_event_addr, timer_stop_task_addr);
+    err_code = nrfx_ppi_channel_assign(ppi_channel_1, timer_event_addr, timer_stop_task_addr);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrfx_ppi_channel_enable(ppi_channel_1);
     APP_ERROR_CHECK(err_code);
 
     nrfx_timer_enable(&IR_PWM_TIMER);
 }
 
-//Taking each bits and starting TIMER with Bit width time
 void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
 
     switch (event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
         {
+            nrf_gpio_pin_clear(IR_LED);
+            
+            //DWT->CYCCNT = 0;
+
             ir_data_t *x = &ir_signal_burst_to_send[ir_bit_index];
 
             uint32_t width_us = x->duty_cycle_us;
             uint32_t state = x->duty_cycle_state;
 
-            nrfx_timer_disable(&IR_PWM_TIMER);
-            nrfx_timer_extended_compare(&IR_PWM_TIMER, NRF_TIMER_CC_CHANNEL0, (width_us - PWM_TIMER_REDUCE_CPU_CYCLES), NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+            if(state) {
+                width_us = width_us - 7;
+            }
+            else
+            {
+                
+                width_us = width_us - 40;
+            }
 
+            nrfx_timer_disable(&IR_PWM_TIMER);
+            nrfx_timer_extended_compare(&IR_PWM_TIMER, NRF_TIMER_CC_CHANNEL0, width_us, NRF_TIMER_SHORT_COMPARE0_STOP_MASK, true);
             nrfx_timer_enable(&IR_PWM_TIMER);
 
             if(state) {
                 nrfx_timer_resume(&IR_CARRIER_TIMER);
             }
-            else
-            {
-                nrfx_timer_pause(&IR_CARRIER_TIMER);
-            }
+
+            //NRF_LOG_INFO("%d", DWT->CYCCNT);
+            //else
+            //{
+                //nrfx_timer_pause(&IR_CARRIER_TIMER); PPI is stopping the timer
+            //}
+
+            //NRF_LOG_INFO("%d - %d", state, width_us);
+            //NRF_LOG_PROCESS();
+
+            
 
             
             ir_bit_index++;
 
             if(ir_bit_index > ir_pulse_count) {
 
-              nrfx_timer_disable(&IR_PWM_TIMER);
-              nrfx_timer_disable(&IR_CARRIER_TIMER);
+              nrfx_timer_pause(&IR_CARRIER_TIMER);
+              nrfx_timer_pause(&IR_PWM_TIMER);
+              if(nrfx_timer_is_enabled(&IR_PWM_TIMER)) nrfx_timer_disable(&IR_PWM_TIMER);
+              if(nrfx_timer_is_enabled(&IR_CARRIER_TIMER)) nrfx_timer_disable(&IR_CARRIER_TIMER);
               nrfx_timer_uninit(&IR_PWM_TIMER);
               nrfx_timer_uninit(&IR_CARRIER_TIMER);
+              nrfx_ppi_channel_disable(ppi_channel_1);
+              nrfx_ppi_channel_free(ppi_channel_1);
+              nrfx_ppi_channel_disable(ppi_channel_2);
+              nrfx_ppi_channel_free(ppi_channel_2);
+              nrfx_gpiote_out_task_disable(IR_LED);
+              nrfx_gpiote_out_uninit(IR_LED);
+              c_task();
               //completion_task(ir_bit_index, ir_signal_burst);
             }
             break;
