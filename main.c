@@ -76,5 +76,5 @@ void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr) {
 }
 
 void ir_transmit_task_completed (void) {
-    start_decoding(&ir_decode_task_completed);
+    start_capturing(&ir_decode_task_completed);
 }

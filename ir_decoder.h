@@ -29,5 +29,5 @@ typedef struct  {
 
 typedef void  ir_decode_complete_task(int, ir_data_t *ir_data_ptr);
 
-void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complete_task t);
+bool start_capturing(ir_decode_complete_task t);
 

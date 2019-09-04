@@ -47,14 +47,14 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context);
 void enable_ir_in_gpiote_interrupt();
 void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
-bool started = false;
+bool is_decoding = false;
 
 void start_capturing(ir_decode_complete_task t) {
   completion_task = t;
   enable_ir_in_gpiote_interrupt();
 }
 
-void enable_ir_in_gpiote_interrupt() {
+bool enable_ir_in_gpiote_interrupt() {
 
     ret_code_t err_code;
     uint32_t timer_start_task_addr;
@@ -109,7 +109,7 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
     switch (event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
-            if(!started) {
+            if(!is_decoding) {
               nrfx_timer_pause(&IR_CAPTURE_TIMER);
               break;
             }
@@ -120,7 +120,7 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
             nrfx_gpiote_in_event_disable(IR_IN);
             nrfx_gpiote_in_uninit(IR_IN);
             completion_task(ir_bit_index, ir_signal_burst);
-            started = false;
+            is_decoding = false;
             break;
         default:
             break;
@@ -137,8 +137,8 @@ void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
     nrfx_timer_clear(&IR_CAPTURE_TIMER);
     nrfx_timer_resume(&IR_CAPTURE_TIMER);
 
-    if(started == false) {
-        started = true;
+    if(is_decoding == false) {
+        is_decoding = true;
     }
     else
     {

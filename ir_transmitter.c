@@ -49,11 +49,17 @@ static uint32_t  ir_pulse_count = 0;
 ir_data_t *ir_signal_burst_to_send;
 
 ir_transmit_complete_task *c_task;
+bool is_sending = false;
 
-void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complete_task t) {
+bool send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complete_task t) {
 
     ret_code_t err_code;
-      
+    
+    if(is_sending) {
+      t();
+      return false;
+    }
+
     c_task = t;
     ir_pulse_count = pulse_count;
     ir_signal_burst_to_send = ir_data;
@@ -67,6 +73,7 @@ void send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complet
     ir_pwm_timer_init();
 
     ir_bit_index = 0;
+    is_sending = true;
 }
 
 //Timer 1 will toggle IR LED via PPI
@@ -201,7 +208,7 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
               nrfx_gpiote_out_task_disable(IR_LED);
               nrfx_gpiote_out_uninit(IR_LED);
               c_task();
-              //completion_task(ir_bit_index, ir_signal_burst);
+              is_sending = false;
             }
             break;
         }
