@@ -196,21 +196,20 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
             ir_bit_index++;
 
             if(ir_bit_index > ir_pulse_count) {
-
-              nrfx_timer_pause(&IR_CARRIER_TIMER);
-              nrfx_timer_pause(&IR_PWM_TIMER);
-              if(nrfx_timer_is_enabled(&IR_PWM_TIMER)) nrfx_timer_disable(&IR_PWM_TIMER);
-              if(nrfx_timer_is_enabled(&IR_CARRIER_TIMER)) nrfx_timer_disable(&IR_CARRIER_TIMER);
-              nrfx_timer_uninit(&IR_PWM_TIMER);
-              nrfx_timer_uninit(&IR_CARRIER_TIMER);
-              nrfx_ppi_channel_disable(ppi_channel_1);
-              nrfx_ppi_channel_free(ppi_channel_1);
-              nrfx_ppi_channel_disable(ppi_channel_2);
-              nrfx_ppi_channel_free(ppi_channel_2);
-              nrfx_gpiote_out_task_disable(IR_LED);
-              nrfx_gpiote_out_uninit(IR_LED);
-              c_task();
-              is_sending = false;
+                nrfx_timer_pause(&IR_CARRIER_TIMER);
+                nrfx_timer_pause(&IR_PWM_TIMER);
+                if(nrfx_timer_is_enabled(&IR_PWM_TIMER)) nrfx_timer_disable(&IR_PWM_TIMER);
+                if(nrfx_timer_is_enabled(&IR_CARRIER_TIMER)) nrfx_timer_disable(&IR_CARRIER_TIMER);
+                nrfx_timer_uninit(&IR_PWM_TIMER);
+                nrfx_timer_uninit(&IR_CARRIER_TIMER);
+                nrfx_ppi_channel_disable(ppi_channel_1);
+                nrfx_ppi_channel_free(ppi_channel_1);
+                nrfx_ppi_channel_disable(ppi_channel_2);
+                nrfx_ppi_channel_free(ppi_channel_2);
+                nrfx_gpiote_out_task_disable(IR_LED);
+                nrfx_gpiote_out_uninit(IR_LED);
+                is_sending = false;
+                c_task();
             }
             break;
         }
