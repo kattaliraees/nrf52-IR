@@ -5,7 +5,7 @@
   * Tested with nrf SDK v15.3 & nrf52832 (IR LED + TSOP38238)
   * Required nrfx drivers PPI, Timer, LOG
   
-'''C
+  ```C
   start_capturing(&ir_decode_task_completed);
   
   void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr) {
@@ -16,5 +16,5 @@
   void ir_transmit_task_completed (void) {
     start_capturing(&ir_decode_task_completed);
   }
-'''C
+  ```
 
