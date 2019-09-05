@@ -61,7 +61,7 @@ bool start_capturing(ir_decode_complete_task t) {
     return true;
 }
 
-bool enable_ir_in_gpiote_interrupt() {
+void enable_ir_in_gpiote_interrupt() {
 
     ret_code_t err_code;
     uint32_t timer_start_task_addr;
