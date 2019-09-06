@@ -38,6 +38,9 @@ SOFTWARE.
 const nrfx_timer_t IR_CARRIER_TIMER = NRFX_TIMER_INSTANCE(1);
 const nrfx_timer_t IR_PWM_TIMER = NRFX_TIMER_INSTANCE(2);
 
+static nrf_ppi_channel_t ppi_channel_1;
+static nrf_ppi_channel_t ppi_channel_2;
+
 void ir_carrier_init(void);
 void ir_pwm_timer_init(void);
 void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context);
