@@ -32,9 +32,6 @@ SOFTWARE.
 #include "ir_transmitter.h"
 #include "nrfx_clock.h"
 
-
-void log_init(void);
-
 void clock_event_handler(nrfx_clock_evt_type_t event) {}
 void ir_decode_task_completed (int number_of_bits, ir_data_t *ir_data_ptr);
 void ir_transmit_task_completed (void);
@@ -56,15 +53,10 @@ int main(void)
     
     NRF_LOG_INFO("Started");
     NRF_LOG_PROCESS();
-
-    //Test DATA
-    //ir_data_t a[] = {{1,9063}, {0,4472}, {1,541}, {0,551}, {1,538}, {0,552}, {1,537}, {0,1670}, {1,541}, {0,550}, {1,539}, {0,550}, {1,539}, {0,549}, {1,541}, {0,550}, {1,537}, {0,1670}, {1,541}, {0,550}};
-    //send_ir_burst(a, 10);
     
     start_capturing(&ir_decode_task_completed);
 
     while (1) {
-        //NRF_LOG_INFO("inside loop");
         NRF_LOG_PROCESS();
     }
 }
