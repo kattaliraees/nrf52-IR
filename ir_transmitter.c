@@ -35,7 +35,6 @@ SOFTWARE.
 //IR LED Input
 #define IR_LED 18
 
-#define PWM_TIMER_REDUCE_CPU_CYCLES 50 //50ms for considering some extra timer ticks during IR Capture and processor execution cycles
 const nrfx_timer_t IR_CARRIER_TIMER = NRFX_TIMER_INSTANCE(1);
 const nrfx_timer_t IR_PWM_TIMER = NRFX_TIMER_INSTANCE(2);
 
@@ -81,7 +80,7 @@ bool send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complet
 //Timer 1 will toggle IR LED via PPI
 void ir_carrier_init(void) {
     
-    uint32_t time_us = 14;
+    uint32_t time_us = 14; //Carrier frequancy 
     uint32_t time_ticks;
     uint32_t compare_evt_addr;
     uint32_t gpiote_task_addr;
@@ -118,6 +117,7 @@ void ir_carrier_init(void) {
 
 }
 
+//This timir will control the IR Carrier out ON/OFF based on IR Data
 void ir_pwm_timer_init(void) {
     
     uint32_t timer_stop_task_addr;
@@ -164,6 +164,7 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
             uint32_t width_us = x->duty_cycle_us;
             uint32_t state = x->duty_cycle_state;
 
+            //Timing calibrations considering processor instruction cycles delay
             if(state) {
                 width_us = width_us - 7;
             }
@@ -172,6 +173,7 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
                 
                 width_us = width_us - 40;
             }
+            //----
 
             nrfx_timer_disable(&IR_PWM_TIMER);
             nrfx_timer_extended_compare(&IR_PWM_TIMER, NRF_TIMER_CC_CHANNEL0, width_us, NRF_TIMER_SHORT_COMPARE0_STOP_MASK, true);
@@ -189,9 +191,6 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
 
             //NRF_LOG_INFO("%d - %d", state, width_us);
             //NRF_LOG_PROCESS();
-
-            
-
             
             ir_bit_index++;
 
