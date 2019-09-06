@@ -39,6 +39,8 @@ static ir_data_t ir_signal_burst[256] = {0, 0};
 
 static uint32_t ir_bit_index = 0;
 
+static nrf_ppi_channel_t ppi_channel;
+
 ir_decode_complete_task *completion_task;
 
 const nrfx_timer_t IR_CAPTURE_TIMER = NRFX_TIMER_INSTANCE(1);
