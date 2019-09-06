@@ -185,15 +185,6 @@ void pwm_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
             if(state) {
                 nrfx_timer_resume(&IR_CARRIER_TIMER);
             }
-
-            //NRF_LOG_INFO("%d", DWT->CYCCNT);
-            //else
-            //{
-                //nrfx_timer_pause(&IR_CARRIER_TIMER); PPI is stopping the timer
-            //}
-
-            //NRF_LOG_INFO("%d - %d", state, width_us);
-            //NRF_LOG_PROCESS();
             
             ir_bit_index++;
 
