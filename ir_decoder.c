@@ -117,6 +117,7 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
     {
         case NRF_TIMER_EVENT_COMPARE0:
             if(!is_decoding) {
+                //Wait for IR signal start
                 nrfx_timer_pause(&IR_CAPTURE_TIMER);
                 break;
             }
@@ -126,8 +127,8 @@ void ir_capture_timer_interrupts(nrf_timer_event_t event_type, void* p_context){
             nrfx_ppi_channel_free(ppi_channel);
             nrfx_gpiote_in_event_disable(IR_IN);
             nrfx_gpiote_in_uninit(IR_IN);
-            completion_task(ir_bit_index, ir_signal_burst);
             is_decoding = false;
+            completion_task(ir_bit_index, ir_signal_burst);
             break;
         default:
             break;
@@ -140,7 +141,7 @@ void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
     //nrfx_timer_pause(&IR_CAPTURE_TIMER); -PPI will stop the timer
 
     NRF_TIMER1->TASKS_CAPTURE[1] = 1;
-    uint32_t pulse_width_us = NRF_TIMER1->CC[1];
+    uint32_t pulse_width_us = NRF_TIMER1->CC[1]; //IR Pulse width 
     nrfx_timer_clear(&IR_CAPTURE_TIMER);
     nrfx_timer_resume(&IR_CAPTURE_TIMER);
 
@@ -150,7 +151,7 @@ void ir_in_gpiote_interrupt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t
     else
     {
         ir_signal_burst[ir_bit_index].duty_cycle_state = nrf_gpio_pin_read(IR_IN);
-        ir_signal_burst[ir_bit_index].duty_cycle_us = pulse_width_us + 5;
+        ir_signal_burst[ir_bit_index].duty_cycle_us = pulse_width_us + 5; //+ 5 for timing calibrations
         ir_bit_index++;
         //NRF_LOG_INFO("%d. %d - %d", ir_bit_index, ir_signal_burst[ir_bit_index].duty_cycle_state, ir_signal_burst[ir_bit_index].duty_cycle_us);
     }
