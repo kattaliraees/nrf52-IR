@@ -18,4 +18,7 @@
     start_capturing(&ir_decode_task_completed);
   }
   ```
+  
+  ![Image of Schematic](https://github.com/kattaliraees/nrf52-IR/blob/master/schematic.png)
+  
 
