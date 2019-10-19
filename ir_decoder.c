@@ -57,6 +57,8 @@ bool start_capturing(ir_decode_complete_task t) {
         t(0, NULL);
         return false;
     }
+    
+    ir_bit_index = 0;
     completion_task = t;
     enable_ir_in_gpiote_interrupt();
 
