@@ -22,6 +22,6 @@ SOFTWARE.*/
 
 #include "ir_decoder.h"
 
-typedef void  ir_transmit_complete_task();
+typedef void  ir_transmit_complete_task(void);
 
 bool send_ir_burst(ir_data_t *ir_data, uint32_t pulse_count, ir_transmit_complete_task t);
