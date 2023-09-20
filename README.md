@@ -1,11 +1,12 @@
 ### nrf52, 51 - IR Capture/Transmitter #
 
   * Capture IR Burst from any IR remote. Send captured or any predefined IR burst. 
-  * Minimal use of CPU cycles. Completly based on PPI Channels
+  * Minimal use of CPU cycles. Completely based on PPI Channels
   * This will work irrespective of the IR Protocol
-  * Tested with nrf SDK v15.3 & nrf52832 custom board (IR LED + TSOP38238)
-  * Required nrfx drivers PPI, Timer, LOG, Clock
+  * Tested with nRF SDK v15.3 & nrf52832 custom board (IR LED + TSOP38238)
+  * Required nRFX drivers PPI, Timer, LOG, Clock
   * Have to be in 64MHz HFCLK
+  * Refer to the complete example project in Segger embedded studio 
   
   ```C
   start_capturing(&ir_decode_task_completed);
