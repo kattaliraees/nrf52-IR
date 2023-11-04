@@ -41,7 +41,3 @@
   ```
   
   ![Image of Schematic](https://github.com/kattaliraees/nrf52-IR/blob/master/schematic.png)
-  
-  
-
-[![coffee](https://www.buymeacoffee.com/assets/img/custom_images/black_img.png)](https://www.buymeacoffee.com/kattaliraees)
